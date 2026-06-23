@@ -29,6 +29,7 @@ header.top{background:var(--cream);border-bottom:3px solid var(--mustard)}
 h1{font-family:var(--display);font-size:30px;color:var(--dark);line-height:1.2}
 h1 b{color:var(--mustard)}
 .sub{font-family:var(--en);font-size:13px;color:#a98b46;margin-top:6px}
+.note{display:inline-flex;align-items:center;gap:6px;font-family:var(--ko);font-size:12px;font-weight:500;color:var(--dark);background:rgba(255,255,255,.55);border:1px solid var(--mustard);border-radius:999px;padding:4px 12px;margin-top:14px}
 
 .controls{position:sticky;top:0;z-index:20;background:var(--bg);
   border-bottom:1px solid var(--line);padding-top:12px}
@@ -84,6 +85,14 @@ main{flex:1;min-width:0;padding:8px 0 80px}
 .kodef .kw{font-weight:700;color:var(--ink)}
 .kodef .kp{color:var(--gray);font-size:12.5px}
 
+.iab{position:relative;z-index:60;display:flex;align-items:center;gap:10px;
+  background:var(--dark);color:#fff;padding:11px 15px;font-family:var(--ko);font-size:13.5px}
+.iab-msg{flex:1;line-height:1.45}
+.iab-msg small{display:block;opacity:.85;font-size:11.5px;margin-top:2px;font-weight:400}
+.iab-btn{flex:0 0 auto;background:#fff;color:var(--dark);font-weight:700;border:0;
+  border-radius:8px;padding:8px 13px;font-size:13px;cursor:pointer;font-family:var(--ko)}
+.iab-btn:active{transform:scale(.96)}
+.iab-x{flex:0 0 auto;background:transparent;color:#fff;border:0;font-size:15px;cursor:pointer;opacity:.85;padding:4px}
 .empty{text-align:center;color:var(--gray);font-size:15px;padding:60px 10px}
 footer{border-top:1px solid var(--line);padding:22px 0 40px;text-align:center}
 footer .wrap{font-family:var(--en);font-size:12px;color:var(--gray)}
@@ -96,11 +105,17 @@ footer .wrap{font-family:var(--en);font-size:12px;color:var(--gray)}
 </style>
 </head>
 <body>
+<div id="iabBanner" class="iab" hidden>
+  <span class="iab-msg"></span>
+  <button id="iabOpen" class="iab-btn">Chrome으로 열기</button>
+  <button id="iabClose" class="iab-x" aria-label="배너 닫기">&#10005;</button>
+</div>
 <header class="top">
   <div class="wrap">
     <span class="eyebrow">교과서 속 영어 단어</span>
     <h1>핵심 과학·수학 <b>용어 사전</b></h1>
     <div class="sub">Science &amp; Math Key Terms · English–Korean · Maxmillian Bookhouse</div>
+    <div class="note"><span aria-hidden="true">&#128266;</span> 발음 듣기는 Chrome·Safari 브라우저에서 가능합니다</div>
   </div>
 </header>
 
@@ -215,6 +230,31 @@ document.getElementById('rail').addEventListener('click', e=>{
   const el = document.getElementById('grp-'+b.dataset.jump); if(el) el.scrollIntoView({block:'start'});
 });
 if('speechSynthesis' in window) speechSynthesis.onvoiceschanged = ()=>{};
+
+// --- in-app browser detection (no speech synthesis support) ---
+(function(){
+  var ua = navigator.userAgent || '';
+  var inApp = /KAKAOTALK|NAVER|Line\/|FBAN|FBAV|FB_IAB|Instagram|DaumApps|band|everytime|KAKAOSTORY|; wv\)/i.test(ua);
+  if(!inApp) return;
+  try{ if(sessionStorage.getItem('iabHide')) return; }catch(e){}
+  var b = document.getElementById('iabBanner');
+  var msg = b.querySelector('.iab-msg');
+  var btn = document.getElementById('iabOpen');
+  if(/Android/i.test(ua)){
+    msg.innerHTML = '\uD83D\uDD0A \uBC1C\uC74C\uC744 \uB4E4\uC73C\uB824\uBA74 Chrome\uC5D0\uC11C \uC5F4\uC5B4\uC8FC\uC138\uC694<small>\uBC84\uD2BC\uC774 \uC548 \uB418\uBA74 \uC6B0\uCE21 \uBA54\uB274 \u2192 \uB2E4\uB978 \uBE0C\uB77C\uC6B0\uC800\uB85C \uC5F4\uAE30</small>';
+    btn.onclick = function(){
+      var u = location.host + location.pathname + location.search;
+      location.href = 'intent://' + u + '#Intent;scheme=https;package=com.android.chrome;end';
+    };
+  } else {
+    btn.hidden = true;
+    msg.innerHTML = '\uD83D\uDD0A \uBC1C\uC74C\uC744 \uB4E4\uC73C\uB824\uBA74 \uC6B0\uCE21 \uBA54\uB274 \u2192 "Safari\uB85C \uC5F4\uAE30"\uB97C \uB20C\uB7EC\uC8FC\uC138\uC694';
+  }
+  b.hidden = false;
+  document.getElementById('iabClose').onclick = function(){
+    b.hidden = true; try{ sessionStorage.setItem('iabHide','1'); }catch(e){}
+  };
+})();
 
 buildTabs(); render();
 </script>
